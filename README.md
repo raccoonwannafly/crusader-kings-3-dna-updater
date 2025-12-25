@@ -13,7 +13,7 @@ CK3's clipboard parser performs a "Sanity Check" on every DNA string you try to 
 Because the lengths do not match, the game assumes the code is corrupted and rejects it immediately.
 
 ## The Solution: "The Template Graft"
-This tool replicates the memory-injection method used by Cheat Engine but performs it safely in the browser using JavaScript. It uses a **"Template Grafting"** algorithm.
+This tool immitates the memory-injection method used by Cheat Engine but performs it safely in the browser using JavaScript. It uses a **"Template Grafting"** algorithm.
 
 ### 1. The Container (Template)
 We take a valid DNA string from the *current* game version (the "Template"). We use this as a container to ensure the final output has the exact file structure and byte length the game expects.
