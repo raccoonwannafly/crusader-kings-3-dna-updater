@@ -47,6 +47,17 @@ const limit = Math.min(finalBytes.length, oldBytes.length);
 for (let i = 0; i < limit; i++) {
     finalBytes[i] = oldBytes[i];
 }
+```
+```text
+Visualizing the Graft:
 
+[ OLD DNA (Short) ]      [ TEMPLATE DNA (Long) ]
+| 0x1A | 0x4F | 0xB2 |   | 0x00 | 0x00 | 0x00 | 0x00 | 0x00 |
+   |      |      |          |      |      |      |      |
+   v      v      v          v      v      v      v      v
+[      GRAFTING      ]   [ 0x1A | 0x4F | 0xB2 | 0x00 | 0x00 ]
+                                              ^      ^
+                                 (Old Face)   (New Features retained)
+```
 // 4. Encode back to Base64 for the clipboard
 return btoa(String.fromCharCode(...finalBytes));
