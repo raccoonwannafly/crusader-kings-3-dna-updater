@@ -15,6 +15,8 @@
             --accent-hover: #b5952f;
             --border: #333a45;
             --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
             --radius: 12px;
         }
 
@@ -82,6 +84,19 @@
         }
 
         textarea::placeholder { color: #4b5563; }
+
+        /* Status Text Styling */
+        .status-text {
+            font-size: 0.8rem;
+            margin-top: 8px;
+            min-height: 1.2em;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+        .status-text.neutral { color: var(--text-muted); }
+        .status-text.valid { color: var(--success); }
+        .status-text.warning { color: var(--warning); }
+        .status-text.error { color: var(--error); }
 
         button.primary-btn {
             width: 100%;
@@ -207,13 +222,17 @@
     </header>
 
     <div class="input-group">
-        <label for="oldDna">Old DNA <span>Source Version</span></label>
+        <label for="oldDna">Old DNA <span>Source</span></label>
         <textarea id="oldDna" placeholder="Paste the broken/outdated DNA string here..."></textarea>
+        <!-- Status Text Added Here -->
+        <div id="oldDnaStatus" class="status-text neutral"></div>
     </div>
 
     <div class="input-group">
-        <label for="templateDna">New Version DNA<span>Target Version</span></label>
+        <label for="templateDna">New Template <span>Target</span></label>
         <textarea id="templateDna" placeholder="Paste a random DNA string from the CURRENT game version here..."></textarea>
+        <!-- Status Text Added Here -->
+        <div id="templateDnaStatus" class="status-text neutral"></div>
     </div>
 
     <button class="primary-btn" onclick="runGraft()">Fix & Generate DNA</button>
@@ -230,7 +249,9 @@
 
 <div id="toast">Copied to clipboard!</div>
 
-<a href="https://buymeacoffee.com/raccoonwannafly" target="_blank" class="coffee-btn">
+<!-- BUY ME A COFFEE BUTTON -->
+<!-- REPLACE '#' with your actual link (e.g. https://www.buymeacoffee.com/yourname) -->
+<a href="#" target="_blank" class="coffee-btn">
     <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M2,21H20V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3Z" />
     </svg>
@@ -238,6 +259,74 @@
 </a>
 
 <script>
+    // --- Diagnostic Logic ---
+    const oldInput = document.getElementById('oldDna');
+    const templateInput = document.getElementById('templateDna');
+    const oldStatus = document.getElementById('oldDnaStatus');
+    const tempStatus = document.getElementById('templateDnaStatus');
+
+    function updateStatus(input, statusEl, isTemplate) {
+        const val = input.value.trim();
+        
+        // 1. Check for empty
+        if (!val) {
+            statusEl.textContent = "";
+            statusEl.className = "status-text neutral";
+            return 0;
+        }
+
+        // 2. Check for Persistent DNA (Text format)
+        if (val.startsWith("ruler_") || val.startsWith("genes=") || val.includes("type=male")) {
+            statusEl.textContent = "Error: This is Persistent DNA (Text). Please use a DNA String (Base64).";
+            statusEl.className = "status-text error";
+            return -1;
+        }
+
+        // 3. Check Base64 Validity & Length
+        try {
+            const decoded = atob(val);
+            const len = decoded.length;
+            
+            if (isTemplate) {
+                 statusEl.textContent = `Valid Template Detected (${len} bytes)`;
+                 statusEl.className = "status-text valid";
+            } else {
+                 statusEl.textContent = `Input DNA Detected (${len} bytes)`;
+                 statusEl.className = "status-text neutral"; // Will update based on comparison later
+            }
+            return len;
+        } catch (e) {
+            statusEl.textContent = "Error: Invalid DNA string (Not Base64).";
+            statusEl.className = "status-text error";
+            return 0;
+        }
+    }
+
+    // Real-time detection listeners
+    function checkComparison() {
+        const oldLen = updateStatus(oldInput, oldStatus, false);
+        const tempLen = updateStatus(templateInput, tempStatus, true);
+
+        // Only compare if both are valid numbers > 0
+        if (oldLen > 0 && tempLen > 0) {
+            if (oldLen < tempLen) {
+                oldStatus.textContent = `Detected: Outdated DNA (${oldLen} bytes). Ready to Fix.`;
+                oldStatus.className = "status-text valid";
+            } else if (oldLen === tempLen) {
+                oldStatus.textContent = `Detected: Same version as template (${oldLen} bytes).`;
+                oldStatus.className = "status-text warning";
+            } else if (oldLen > tempLen) {
+                oldStatus.textContent = `Detected: Modded/EPE DNA (${oldLen} bytes). Extra data will be truncated.`;
+                oldStatus.className = "status-text warning";
+            }
+        }
+    }
+
+    oldInput.addEventListener('input', checkComparison);
+    templateInput.addEventListener('input', checkComparison);
+
+
+    // --- Core Grafting Logic ---
     function graftDNA(oldDNA, templateDNA) {
         try {
             const oldBin = atob(oldDNA.trim());
@@ -271,6 +360,12 @@
         if (!old || !temp) {
             showToast("Please fill in both text areas!", true);
             return;
+        }
+
+        // Quick check before running
+        if (old.startsWith("ruler_") || old.startsWith("genes=")) {
+             showToast("Error: Cannot process Persistent DNA (Text format).", true);
+             return;
         }
 
         const result = graftDNA(old, temp);
