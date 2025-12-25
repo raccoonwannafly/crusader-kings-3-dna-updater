@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CK3 DNA Grafter</title>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --card-bg: #181b21;
+            --input-bg: #22262e;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #d4af37; /* CK3 Gold */
+            --accent-hover: #b5952f;
+            --border: #333a45;
+            --success: #10b981;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 550px;
+            border: 1px solid var(--border);
+            position: relative;
+            z-index: 10;
+        }
+
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: var(--accent); margin: 0 0 10px 0; font-weight: 700; letter-spacing: -0.5px; }
+        p.subtitle { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
+
+        .input-group { margin-bottom: 25px; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        label span { color: var(--accent); opacity: 0.8; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            resize: none;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+        }
+
+        textarea::placeholder { color: #4b5563; }
+
+        button.primary-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        button.primary-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        button.primary-btn:active { transform: translateY(1px); }
+
+        /* Result Section */
+        .result-area {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+            pointer-events: none;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .result-area.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+            height: auto;
+            overflow: visible;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background-color: #2d3748;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .copy-btn:hover { background-color: #374151; }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            border-left: 4px solid var(--success);
+        }
+        
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* --- Coffee Button Styling --- */
+        .coffee-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent); /* Theme Gold */
+            color: #1a1a1a;
+            padding: 12px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 50;
+        }
+
+        .coffee-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            background-color: #e5c148;
+        }
+
+        .coffee-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>DNA Grafter</h1>
+        <p class="subtitle">Convert outdated CK3 DNA to modern versions.</p>
+    </header>
+
+    <div class="input-group">
+        <label for="oldDna">Old DNA <span>Source</span></label>
+        <textarea id="oldDna" placeholder="Paste the broken/outdated DNA string here..."></textarea>
+    </div>
+
+    <div class="input-group">
+        <label for="templateDna">New Template <span>Target</span></label>
+        <textarea id="templateDna" placeholder="Paste a random DNA string from the CURRENT game version here..."></textarea>
+    </div>
+
+    <button class="primary-btn" onclick="runGraft()">Fix & Generate DNA</button>
+
+    <div id="resultBox" class="result-area">
+        <label for="finalDna">Fixed DNA <span>Ready to use</span></label>
+        <textarea id="finalDna" readonly onclick="this.select()"></textarea>
+        <button class="copy-btn" onclick="copyResult()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            Copy to Clipboard
+        </button>
+    </div>
+</div>
+
+<div id="toast">Copied to clipboard!</div>
+
+<a href="https://buymeacoffee.com/raccoonwannafly" target="_blank" class="coffee-btn">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M2,21H20V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3Z" />
+    </svg>
+    Buy me a coffee
+</a>
+
+<script>
+    function graftDNA(oldDNA, templateDNA) {
+        try {
+            const oldBin = atob(oldDNA.trim());
+            const templateBin = atob(templateDNA.trim());
+
+            const oldBytes = new Uint8Array(oldBin.length);
+            for (let i = 0; i < oldBin.length; i++) oldBytes[i] = oldBin.charCodeAt(i);
+
+            const templateBytes = new Uint8Array(templateBin.length);
+            for (let i = 0; i < templateBin.length; i++) templateBytes[i] = templateBin.charCodeAt(i);
+
+            const outputBytes = new Uint8Array(templateBytes);
+            const limit = Math.min(outputBytes.length, oldBytes.length);
+            for (let i = 0; i < limit; i++) outputBytes[i] = oldBytes[i];
+
+            let binaryString = "";
+            for (let i = 0; i < outputBytes.length; i++) binaryString += String.fromCharCode(outputBytes[i]);
+
+            return btoa(binaryString);
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+
+    function runGraft() {
+        const old = document.getElementById('oldDna').value;
+        const temp = document.getElementById('templateDna').value;
+        const resultBox = document.getElementById('resultBox');
+        
+        if (!old || !temp) {
+            showToast("Please fill in both text areas!", true);
+            return;
+        }
+
+        const result = graftDNA(old, temp);
+        
+        if (result) {
+            document.getElementById('finalDna').value = result;
+            resultBox.classList.add('active');
+            if(window.innerWidth < 600) {
+                resultBox.scrollIntoView({behavior: "smooth"});
+            }
+        } else {
+            showToast("Error: Invalid Base64 DNA string.", true);
+        }
+    }
+
+    function copyResult() {
+        const copyText = document.getElementById("finalDna");
+        copyText.select();
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            showToast("Success! Copied to clipboard.");
+        });
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById("toast");
+        toast.innerText = message;
+        toast.style.borderLeftColor = isError ? "#ef4444" : "#10b981";
+        toast.className = "show";
+        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+    }
+</script>
+
+</body>
+</html>
